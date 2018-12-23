@@ -1,5 +1,6 @@
 import dmenu
 from subprocess import call
+from pykeyboard import PyKeyboard
 import re
 import pyotp
 
@@ -42,7 +43,7 @@ def getAvailableCodes():
 
 def typeToken(entry):
     totp = pyotp.TOTP(entry.getSecret())
-    call(['xdotool', 'type', totp.now()])
+    PyKeyboard().type_string(totp.now())
 
 def parseEntry(line):
     reg = re.search("([^;\n]+);([^;\n]+);([^;\n]+);([^;\n]+)", line)
