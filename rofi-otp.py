@@ -1,5 +1,4 @@
 import dmenu
-from subprocess import call
 from pykeyboard import PyKeyboard
 import re
 import pyotp
