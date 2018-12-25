@@ -3,7 +3,6 @@ from rofi import Rofi
 from pykeyboard import PyKeyboard
 import re
 import pyotp
-import qrtools
 
 menu = "rofi"
 entries = []
@@ -112,5 +111,7 @@ def start():
     selection = openMenu()
     if selection in modes:
         modes[selection]()
+    else:
+        typeToken(parseSelection(selection))
 
 start()
