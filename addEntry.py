@@ -10,12 +10,9 @@ from urllib.parse import unquote
 
 
 def openAsBase64Image(base64string):
-    img_data = base64.b64encode(base64string.encode())
-    filename = "qrbase64temp.png"
-    with open(filename, "wb") as fh:
-        fh.write(base64.decodebytes(img_data))
-
-    return Image.frombytes('RGB', (256, 256), base64.decodebytes(img_data))
+    if "data:image" in base64string:
+        base64string = re.search("data:image/.*;base64,(.*)", base64string).group(1)
+    return Image.open(BytesIO(base64.b64decode(base64string)))
 
 
 def openFromPath(path):
@@ -28,7 +25,7 @@ def openFromPath(path):
 def entryFromQR(image):
     res = unquote(decode(image)[0].data.decode('utf-8'))
     regex_res = re.search("//(.*)/(.*)\?secret=(.*)&issuer=(.*)&algorithm=(.*)&digits=(\d*)&period=(\d*)", res)
-    qr_type, label, issuer, secret, algo, digits, period = regex_res.groups()
+    qr_type, label, secret, issuer, algo, digits, period = regex_res.groups()
 
     return Entry(label, issuer, secret, algo, digits, qr_type)
 
@@ -36,5 +33,3 @@ def entryFromQR(image):
 def writeToFile(entry):
     file = open("SECRETS", "a")
     file.write("\n" + entry.getFileEntry())
-
-# writeToFile(entryFromQR(openFromPath("qr.png")))
