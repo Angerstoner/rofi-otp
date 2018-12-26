@@ -1,17 +1,23 @@
 import dmenu
+import re
+from pyotp import TOTP
 from rofi import Rofi
 from pykeyboard import PyKeyboard
-import re
-import pyotp
+from entry import Entry
+from addEntry import entryFromQR, openFromPath, openAsBase64Image, writeToFile
 
 menu = "rofi"
 entries = []
 
-def showInDMenu(entries):
-    return dmenu.show(entries, prompt="Entries")
 
-def showInRofi(entries):
-    index, key =  Rofi().select("Entries", entries)
+def showInDMenu(entries, prompt="Entries", mode="selection"):
+    return dmenu.show(entries, prompt=prompt)
+
+
+def showInRofi(entries, prompt="Entries", mode="selection"):
+    if (mode == "prompt"):
+        return Rofi().text_entry(prompt)
+    index, key = Rofi().select(prompt, entries)
     return entries[index]
 
 menus = {
@@ -19,51 +25,18 @@ menus = {
     "rofi": showInRofi
 }
 
-class Entry:
-    def __init__(self, title, user, secret, type):
-        self.id = -1
-        self.title = title
-        self.user = user
-        self.secret = secret
-        self.type = type
-
-    def __repr__(self):
-        return str(self.id) + ": " + self.title + "\t" + self.user
-
-    def __str__(self):
-        return str(self.id) + ": " + self.title + "\t" + self.user
-
-    def setID(self, id):
-        self.id = id
-
-    def getTitle(self):
-        return self.title
-
-    def getUser(self):
-        return self.user
-
-    def getSecret(self):
-        return self.secret
-
-    def getType(self):
-        return self.type
-
-    def getID(self):
-        return self.id
-
-
 def getAvailableCodes():
     return [str(entry) for entry in entries]
 
 
 def typeToken(entry):
-    totp = pyotp.TOTP(entry.getSecret())
+    totp = TOTP(entry.getSecret())
     PyKeyboard().type_string(totp.now())
 
 
 def parseEntry(line):
-    reg = re.search("([^;\n]+);([^;\n]+);([^;\n]+);([^;\n]+)", line)
-    return Entry(reg.group(1), reg.group(2), reg.group(3), reg.group(4))
+    reg = re.search("([^;\n]+);([^;\n]+);([^;\n]+);([^;\n]+);(\d);([^;\n]+)", line)
+    return Entry(reg.group(1), reg.group(2), reg.group(3), reg.group(4), reg.group(5), reg.group(6))
 
 
 def parseSelection(line):
@@ -71,7 +44,20 @@ def parseSelection(line):
 
 
 def addEntry():
-    print("ADD")
+    add_by_qr_path = "Add by QR-Code (path/url)"
+    add_by_qr_image = "Add by QR-Code (base64 image)"
+    add_manually = "Add manually"
+    selection = menus[menu]([add_by_qr_path, add_by_qr_image, add_manually])
+    if selection == add_by_qr_path:
+        path = menus[menu]([], "Please enter the image path", "prompt")
+        new_entry = entryFromQR(openFromPath(path))
+    elif selection == add_by_qr_image:
+        data = menus[menu]([], "Please enter the image data in base64 encoding", "prompt")
+        new_entry = entryFromQR(openAsBase64Image(data))
+    else:
+        new_entry = Entry(None, None, None, None, None, None)
+        print("not implemented")
+    writeToFile(new_entry)
 
 
 def editEntry():
@@ -82,7 +68,7 @@ def showEntry():
     print("SHOW")
 
 
-modes = {
+entryOptions = {
     "Add": addEntry,
     "Edit": editEntry,
     "Show": showEntry
@@ -109,9 +95,11 @@ def openMenu():
 def start():
     initEntries()
     selection = openMenu()
-    if selection in modes:
-        modes[selection]()
+    if selection in entryOptions:
+        entryOptions[selection]()
     else:
         typeToken(parseSelection(selection))
 
+
 start()
+
