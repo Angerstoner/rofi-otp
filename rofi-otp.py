@@ -40,7 +40,7 @@ def parseEntry(line):
 
 
 def parseSelection(line):
-    return entries[int(re.search("(\d?):", line).group(1)) - 1]
+    return entries[int(re.search("(\d+):", line).group(1)) - 1]
 
 
 def addEntry():
