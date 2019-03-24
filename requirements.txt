@@ -1,0 +1,4 @@
+dmenu
+pyotp
+git+git://github.com/bcbnz/python-rofi.git#egg=python-rofi
+pyuserinput
