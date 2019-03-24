@@ -18,6 +18,8 @@ def show_in_rofi(entries, prompt="Entries", mode="selection"):
     if mode == "prompt":
         return Rofi().text_entry(prompt)
     index, key = Rofi().select(prompt, entries, rofi_args=['-i'])
+    if index == -1:
+        return None
     return entries[index]
 
 
@@ -99,7 +101,7 @@ def start():
     selection = open_menu()
     if selection in entryOptions:
         entryOptions[selection]()
-    else:
+    elif selection is not None:
         type_token(parse_selection(selection))
 
 
